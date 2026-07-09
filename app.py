@@ -113,9 +113,15 @@ def load_models():
     # Load embedding model
     embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
     
-    # Load ChromaDB
-    chroma_client = chromadb.PersistentClient(path="./chroma_db")
-    collection = chroma_client.get_collection(name="ethiopia_sdg")
+    # Try to load ChromaDB (optional - works without it)
+    collection = None
+    try:
+        chroma_client = chromadb.PersistentClient(path="./chroma_db")
+        collection = chroma_client.get_collection(name="ethiopia_sdg")
+        st.success("✅ Local database loaded (11,346 documents)")
+    except Exception as e:
+        st.warning("⚠️ Local database not available. Using live data only from World Bank, ESS, and UN.")
+        collection = None
     
     # Initialize Gemini - find available model
     from google import genai
@@ -157,17 +163,20 @@ def ask_chatbot(question, fetch_live=True):
         fetch_live: Whether to fetch live data (default: True)
     """
     
-    # Step 1: Search local database
-    with st.spinner("🔍 Searching stored database..."):
-        query_embedding = embedding_model.encode([question])
-        results = collection.query(
-            query_embeddings=query_embedding.tolist(),
-            n_results=12  # Balance between stored and live data
-        )
-        
-        stored_context = []
-        for i, (doc, meta) in enumerate(zip(results['documents'][0], results['metadatas'][0])):
-            stored_context.append(f"[STORED DATA] Source {i+1}:\n{doc}\n")
+    # Step 1: Search local database (if available)
+    stored_context = []
+    if collection is not None:
+        with st.spinner("🔍 Searching stored database..."):
+            query_embedding = embedding_model.encode([question])
+            results = collection.query(
+                query_embeddings=query_embedding.tolist(),
+                n_results=12  # Balance between stored and live data
+            )
+            
+            for i, (doc, meta) in enumerate(zip(results['documents'][0], results['metadatas'][0])):
+                stored_context.append(f"[STORED DATA] Source {i+1}:\n{doc}\n")
+    else:
+        st.info("ℹ️ Using live data sources only (World Bank + ESS + UN)")
     
     # Step 2: Fetch live data from all sources
     live_context = []
@@ -384,7 +393,7 @@ with st.sidebar:
     - 🔵 **UN SDG Database** - Quarterly updates
     
     **Stored Data:**
-    - 📁 11,346 historical documents
+    - 📁 11,346 historical documents (if available)
     - 📊 465 unique indicators
     - 📅 Years: 1995-2026
     """)
