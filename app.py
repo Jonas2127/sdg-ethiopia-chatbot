@@ -104,10 +104,15 @@ st.markdown("""
 def load_models():
     """Load models and initialize fetcher once"""
     load_dotenv()
-    api_key = os.getenv('GOOGLE_API_KEY')
+    
+    # Try to get API key from Streamlit secrets first (for cloud), then from .env (for local)
+    try:
+        api_key = st.secrets["GOOGLE_API_KEY"]
+    except:
+        api_key = os.getenv('GOOGLE_API_KEY')
     
     if not api_key:
-        st.error("❌ GOOGLE_API_KEY not found in .env file")
+        st.error("❌ GOOGLE_API_KEY not found. Please add it to Streamlit secrets (cloud) or .env file (local)")
         st.stop()
     
     # Load embedding model
