@@ -128,25 +128,36 @@ def load_models():
         st.warning("⚠️ Local database not available. Using live data only from World Bank, ESS, and UN.")
         collection = None
     
-    # Initialize Gemini - find available model
+    # Initialize Gemini with stable model
     from google import genai
     gemini_client = genai.Client(api_key=api_key)
     
-    # Try to find an available model
+    # Use working model - try multiple options in order of preference (with models/ prefix)
+    working_models = [
+        'models/gemini-2.0-flash-lite',
+        'models/gemini-2.0-flash',
+        'models/gemini-2.0-flash-001',
+        'models/gemini-1.5-flash-latest',
+        'models/gemini-1.5-flash',
+        'models/gemini-1.5-pro-latest',
+        'models/gemini-1.5-pro'
+    ]
+    
     available_model = None
-    try:
-        models = gemini_client.models.list()
-        model_names = [m.name for m in models]
-        # Look for flash or pro models
-        for name in model_names:
-            if 'flash' in name.lower() or 'pro' in name.lower():
-                available_model = name
-                break
-        if not available_model and model_names:
-            available_model = model_names[0]
-    except:
-        # Fallback to try common names
-        available_model = 'models/gemini-1.5-flash'
+    for model in working_models:
+        try:
+            # Test if model works with a simple query
+            test_response = gemini_client.models.generate_content(
+                model=model,
+                contents="Hi"
+            )
+            available_model = model
+            break
+        except Exception as e:
+            continue
+    
+    if not available_model:
+        available_model = 'gemini-1.5-flash-latest'  # Fallback
     
     # Initialize unified fetcher
     fetcher = UnifiedDataFetcher()

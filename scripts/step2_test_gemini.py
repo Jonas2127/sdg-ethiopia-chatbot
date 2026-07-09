@@ -50,29 +50,44 @@ try:
         for m in available_models[:10]:
             print(f"  - {m}")
         
-        # Find a model that supports generateContent
-        model_to_use = None
-        for model_name in available_models:
-            # Look for flash or pro models
-            if 'flash' in model_name.lower() or 'pro' in model_name.lower():
-                if 'generateContent' in str(model_name):
-                    model_to_use = model_name
-                    break
-        
-        # If no specific match, just try the first model
-        if not model_to_use and available_models:
-            model_to_use = available_models[0]
-        
-        if not model_to_use:
-            print("\n✗ No suitable models found")
-            exit(1)
-            
-        print(f"\nUsing model: {model_to_use}")
-        
     except Exception as e:
         print(f"Could not list models: {e}")
-        print("Trying default model: models/gemini-1.5-flash")
-        model_to_use = 'models/gemini-1.5-flash'
+    
+    # Try multiple working models in order of preference (with models/ prefix)
+    models_to_try = [
+        'models/gemini-2.0-flash-lite',
+        'models/gemini-2.0-flash',
+        'models/gemini-2.0-flash-001',
+        'models/gemini-1.5-flash-latest',
+        'models/gemini-1.5-flash',
+        'models/gemini-1.5-pro-latest',
+        'models/gemini-1.5-pro',
+        'models/gemini-1.5-flash-001',
+        'models/gemini-1.0-pro'
+    ]
+    
+    print("\n--- Testing models to find a working one ---")
+    model_to_use = None
+    last_error = None
+    for test_model in models_to_try:
+        try:
+            print(f"Trying: {test_model}...", end=" ")
+            response = client.models.generate_content(
+                model=test_model,
+                contents="Hi"
+            )
+            model_to_use = test_model
+            print("✓ Works!")
+            break
+        except Exception as e:
+            last_error = str(e)
+            print(f"✗ Failed ({str(e)[:50]}...)")
+            continue
+    
+    if not model_to_use:
+        print(f"\n✗ No working models found")
+        print(f"\nLast error details: {last_error}")
+        exit(1)
     
     print("\n--- Sending test prompt to Gemini ---")
     response = client.models.generate_content(
