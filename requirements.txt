@@ -1,0 +1,37 @@
+# Core dependencies for SDG Ethiopia Chatbot
+# Install with: pip install -r requirements.txt
+# Optimized for Windows with Python 3.14+
+
+# Data processing - using latest stable versions with wheels
+pandas
+numpy
+
+# LLM and orchestration
+langchain
+langchain-google-genai
+google-generativeai
+
+# Vector database and embeddings
+chromadb
+sentence-transformers
+
+# Web interface
+streamlit
+
+# Utilities
+python-dotenv
+requests
+
+# Telegram bot (optional)
+python-telegram-bot
+
+# Document processing for ESS reports (optional)
+PyPDF2
+python-docx
+
+# Web scraping for live ESS data
+beautifulsoup4
+lxml
+
+# Image processing for logo display
+Pillow
