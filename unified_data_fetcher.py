@@ -13,12 +13,18 @@ Features:
 
 import requests
 from bs4 import BeautifulSoup
-import PyPDF2
 import io
 from datetime import datetime, timedelta
 import json
 import os
 from pathlib import Path
+
+# Optional PDF support (only needed for local ESS report processing)
+try:
+    import PyPDF2
+    PDF_SUPPORT = True
+except ImportError:
+    PDF_SUPPORT = False
 
 class UnifiedDataFetcher:
     """Unified fetcher for all three data sources: UN, World Bank, ESS"""
