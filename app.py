@@ -8,8 +8,6 @@ Run with: streamlit run app.py
 import streamlit as st
 import os
 from dotenv import load_dotenv
-import chromadb
-from sentence_transformers import SentenceTransformer
 from google import genai
 from unified_data_fetcher import UnifiedDataFetcher
 
@@ -115,18 +113,27 @@ def load_models():
         st.error("❌ GOOGLE_API_KEY not found. Please add it to Streamlit secrets (cloud) or .env file (local)")
         st.stop()
     
-    # Load embedding model
-    embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
-    
-    # Try to load ChromaDB (optional - works without it)
+    # Load embedding model - with error handling for Streamlit Cloud
+    # NOTE: On Streamlit Cloud, we skip embeddings and use live data only
+    embedding_model = None
     collection = None
+    
+    # Try to load local database if running locally
     try:
+        import chromadb
         chroma_client = chromadb.PersistentClient(path="./chroma_db")
         collection = chroma_client.get_collection(name="ethiopia_sdg")
-        st.success("✅ Local database loaded (11,346 documents)")
-    except Exception as e:
-        st.warning("⚠️ Local database not available. Using live data only from World Bank, ESS, and UN.")
-        collection = None
+        
+        # If database found, also try to load embedding model
+        try:
+            from sentence_transformers import SentenceTransformer
+            embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+            st.success("✅ Local database loaded (11,346 documents)")
+        except:
+            collection = None  # Can't use DB without embeddings
+            st.info("ℹ️ Using live data only (World Bank + ESS + UN)")
+    except:
+        st.info("ℹ️ Using live data only (World Bank + ESS + UN)")
     
     # Initialize Gemini with stable model
     from google import genai
@@ -181,7 +188,7 @@ def ask_chatbot(question, fetch_live=True):
     
     # Step 1: Search local database (if available)
     stored_context = []
-    if collection is not None:
+    if collection is not None and embedding_model is not None:
         with st.spinner("🔍 Searching stored database..."):
             query_embedding = embedding_model.encode([question])
             results = collection.query(

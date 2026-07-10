@@ -1,5 +1,5 @@
 # Core dependencies for SDG Ethiopia Chatbot
-# Optimized for Streamlit Cloud deployment
+# Optimized for Streamlit Cloud deployment (no vector DB)
 # Install with: pip install -r requirements.txt
 
 # Data processing
@@ -9,10 +9,6 @@ numpy
 # LLM and orchestration
 google-generativeai
 python-dotenv
-
-# Vector database and embeddings
-chromadb
-sentence-transformers
 
 # Web interface
 streamlit
