@@ -620,17 +620,17 @@ if not st.session_state.get('cache_cleared', False):
                     # Display source statistics
                     st.markdown("---")
                     col1, col2, col3 = st.columns(3)
-                with col1:
-                    st.metric("📁 Stored Sources", stored_count)
-                with col2:
-                    st.metric("🌐 Live Sources", live_count)
-                with col3:
-                    st.metric("📊 Total Sources", stored_count + live_count)
-                
-                # Show expander with raw context
-                with st.expander("🔍 View Source Documents"):
-                    st.markdown("**Note:** This shows the retrieved context used to generate the answer.")
-                    st.text(f"Retrieved {stored_count} stored documents and {live_count} live data sources")
+                    with col1:
+                        st.metric("📁 Stored Sources", stored_count)
+                    with col2:
+                        st.metric("🌐 Live Sources", live_count)
+                    with col3:
+                        st.metric("📊 Total Sources", stored_count + live_count)
+                    
+                    # Show expander with raw context
+                    with st.expander("🔍 View Source Documents"):
+                        st.markdown("**Note:** This shows the retrieved context used to generate the answer.")
+                        st.text(f"Retrieved {stored_count} stored documents and {live_count} live data sources")
         else:
             st.warning("⚠️ Please enter a question")
 
