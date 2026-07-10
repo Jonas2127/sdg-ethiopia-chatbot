@@ -6,8 +6,8 @@
 pandas
 numpy
 
-# LLM and orchestration - FIXED package name
-google-genai>=0.3.0
+# LLM and orchestration
+google-generativeai
 python-dotenv
 
 # Web interface

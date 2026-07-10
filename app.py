@@ -8,7 +8,7 @@ Run with: streamlit run app.py
 import streamlit as st
 import os
 from dotenv import load_dotenv
-from google import genai
+import google.generativeai as genai
 from unified_data_fetcher import UnifiedDataFetcher
 
 # Page configuration
@@ -135,43 +135,39 @@ def load_models():
     except:
         st.info("ℹ️ Using live data only (World Bank + ESS + UN)")
     
-    # Initialize Gemini with stable model
-    from google import genai
-    gemini_client = genai.Client(api_key=api_key)
+    # Initialize Gemini
+    genai.configure(api_key=api_key)
     
-    # Use working model - try multiple options in order of preference (with models/ prefix)
+    # Use working model - try multiple options in order of preference
     working_models = [
-        'models/gemini-2.0-flash-lite',
-        'models/gemini-2.0-flash',
-        'models/gemini-2.0-flash-001',
-        'models/gemini-1.5-flash-latest',
-        'models/gemini-1.5-flash',
-        'models/gemini-1.5-pro-latest',
-        'models/gemini-1.5-pro'
+        'gemini-2.0-flash-lite',
+        'gemini-2.0-flash-exp-0205',
+        'gemini-1.5-flash-latest',
+        'gemini-1.5-flash',
+        'gemini-1.5-pro-latest',
+        'gemini-1.5-pro'
     ]
     
     available_model = None
-    for model in working_models:
+    for model_name in working_models:
         try:
             # Test if model works with a simple query
-            test_response = gemini_client.models.generate_content(
-                model=model,
-                contents="Hi"
-            )
-            available_model = model
+            model = genai.GenerativeModel(model_name)
+            test_response = model.generate_content("Hi")
+            available_model = model_name
             break
         except Exception as e:
             continue
     
     if not available_model:
-        available_model = 'gemini-1.5-flash-latest'  # Fallback
+        available_model = 'gemini-1.5-flash'  # Fallback
     
     # Initialize unified fetcher
     fetcher = UnifiedDataFetcher()
     
-    return embedding_model, collection, gemini_client, fetcher, available_model
+    return embedding_model, collection, available_model, fetcher
 
-embedding_model, collection, gemini_client, fetcher, available_model = load_models()
+embedding_model, collection, available_model, fetcher = load_models()
 
 # ============================================
 # CHATBOT FUNCTION - UNIFIED LIVE DATA
@@ -312,10 +308,8 @@ Answer (Remember: If asked about 2024-2026, you MUST provide both verified data 
     with st.spinner("🤖 Generating answer..."):
         for attempt in range(3):
             try:
-                response = gemini_client.models.generate_content(
-                    model=available_model,
-                    contents=prompt
-                )
+                model = genai.GenerativeModel(available_model)
+                response = model.generate_content(prompt)
                 
                 return response.text, len(stored_context), len(live_context)
                 
