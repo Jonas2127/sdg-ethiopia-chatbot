@@ -139,13 +139,11 @@ def load_models():
     genai.configure(api_key=api_key)
     
     # Use working model - try multiple options in order of preference
+    # Using simpler model names that work with google-generativeai
     working_models = [
-        'gemini-2.0-flash-lite',
-        'gemini-2.0-flash-exp-0205',
-        'gemini-1.5-flash-latest',
         'gemini-1.5-flash',
-        'gemini-1.5-pro-latest',
-        'gemini-1.5-pro'
+        'gemini-1.5-pro',
+        'gemini-pro'
     ]
     
     available_model = None
@@ -155,12 +153,15 @@ def load_models():
             model = genai.GenerativeModel(model_name)
             test_response = model.generate_content("Hi")
             available_model = model_name
+            st.info(f"✅ Using model: {model_name}")
             break
         except Exception as e:
+            st.warning(f"⚠️ Model {model_name} not available: {str(e)[:100]}")
             continue
     
     if not available_model:
-        available_model = 'gemini-1.5-flash'  # Fallback
+        st.error("❌ No working Gemini models found. Please check your API key.")
+        available_model = 'gemini-1.5-flash'  # Fallback anyway
     
     # Initialize unified fetcher
     fetcher = UnifiedDataFetcher()
