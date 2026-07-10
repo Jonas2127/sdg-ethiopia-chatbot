@@ -8,7 +8,7 @@ Run with: streamlit run app.py
 import streamlit as st
 import os
 from dotenv import load_dotenv
-import google.generativeai as genai
+from google import genai
 from unified_data_fetcher import UnifiedDataFetcher
 
 # Page configuration
@@ -135,11 +135,11 @@ def load_models():
     except:
         st.info("ℹ️ Using live data only (World Bank + ESS + UN)")
     
-    # Initialize Gemini
-    genai.configure(api_key=api_key)
+    # Initialize Gemini with new google.genai package
+    client = genai.Client(api_key=api_key)
     
     # Use working model - try multiple options in order of preference
-    # Using simpler model names that work with google-generativeai
+    # Using simpler model names that work with google.genai
     working_models = [
         'gemini-1.5-flash',
         'gemini-1.5-pro',
@@ -150,8 +150,10 @@ def load_models():
     for model_name in working_models:
         try:
             # Test if model works with a simple query
-            model = genai.GenerativeModel(model_name)
-            test_response = model.generate_content("Hi")
+            response = client.models.generate_content(
+                model=model_name,
+                contents="Hi"
+            )
             available_model = model_name
             st.info(f"✅ Using model: {model_name}")
             break
@@ -166,9 +168,9 @@ def load_models():
     # Initialize unified fetcher
     fetcher = UnifiedDataFetcher()
     
-    return embedding_model, collection, available_model, fetcher
+    return embedding_model, collection, available_model, fetcher, client
 
-embedding_model, collection, available_model, fetcher = load_models()
+embedding_model, collection, available_model, fetcher, client = load_models()
 
 # ============================================
 # CHATBOT FUNCTION - UNIFIED LIVE DATA
@@ -309,8 +311,10 @@ Answer (Remember: If asked about 2024-2026, you MUST provide both verified data 
     with st.spinner("🤖 Generating answer..."):
         for attempt in range(3):
             try:
-                model = genai.GenerativeModel(available_model)
-                response = model.generate_content(prompt)
+                response = client.models.generate_content(
+                    model=available_model,
+                    contents=prompt
+                )
                 
                 return response.text, len(stored_context), len(live_context)
                 

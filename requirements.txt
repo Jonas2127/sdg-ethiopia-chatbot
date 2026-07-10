@@ -6,8 +6,8 @@
 pandas
 numpy
 
-# LLM and orchestration
-google-generativeai
+# LLM and orchestration - Using NEW google.genai package
+google-genai>=0.3.0
 python-dotenv
 
 # Web interface
